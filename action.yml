@@ -24,12 +24,16 @@ runs:
       env:
         CHANGED: ${{ steps.changed_lines.outputs.changed_lines }}
       run: echo "$CHANGED"
+      shell: bash
 
-    - name: Install Goodcheck
+    - name: Setup Ruby
       uses: ruby/setup-ruby@v1
       with:
         ruby-version: 2.6
+
+    - name: Install Goodcheck
       run: gem install goodcheck
+      shell: bash
 
     - name: Analyze code statically using Goodcheck
       id: goodcheck-analysis
