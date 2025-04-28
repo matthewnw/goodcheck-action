@@ -25,19 +25,23 @@ runs:
         CHANGED: ${{ steps.changed_lines.outputs.changed_lines }}
       run: echo "$CHANGED"
 
-    - uses: ruby/setup-ruby@v1
+    - name: Install Goodcheck
+      uses: ruby/setup-ruby@v1
       with:
         ruby-version: 2.6
-    - run: gem install goodcheck
+      run: gem install goodcheck
+      shell: bash
 
     - name: Analyze code statically using Goodcheck
       id: goodcheck-analysis
       run: |
           echo "errors='$(goodcheck check ${{ steps.changed_lines.outputs.changed_files }} --format=json)'" >> $GITHUB_OUTPUT
+      shell: bash
 
     - name: Add code review comments to PR
+      run: bash src/add-comments-to-pr.sh
+      shell: bash
       env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ inputs.github_token }}
           CHANGED: ${{ steps.changed_lines.outputs.changed_lines }}
           ERRORS: ${{ steps.goodcheck-analysis.outputs.errors }}
-      run: bash src/add-comments-to-pr.sh
