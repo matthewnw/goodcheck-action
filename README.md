@@ -2,6 +2,8 @@
 
 GitHub Action to analyze pull request changes using Goodcheck and post inline comments.
 
+https://sider.github.io/goodcheck/docs/getstarted
+
 ## Usage
 
 ```yaml
