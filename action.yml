@@ -3,46 +3,41 @@
 # See:
 # https://sider.github.io/goodcheck/docs/getstarted
 
-name: Auto code review
-on: [pull_request]
-jobs:
-    goodcheck:
-        runs-on: ubuntu-latest
-        permissions:
-            contents: read
-            pull-requests: write
+name: Goodcheck PR review
+description: Analyze PR changes with Goodcheck and post comments
+inputs:
+  github_token:
+    description: 'GitHub Token'
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/checkout@v4
+      with:
+          fetch-depth: 0
 
-        concurrency:
-            group: goodcheck-${{ github.ref }}
-            cancel-in-progress: true
+    - name: Find changed lines
+      id: changed_lines
+      uses: hestonhoffman/changed-lines@v1
 
-        steps:
-            - uses: actions/checkout@v4
-              with:
-                  fetch-depth: 0
+    - name: Print changed lines
+      env:
+        CHANGED: ${{ steps.changed_lines.outputs.changed_lines }}
+      run: echo "$CHANGED"
 
-            - name: Find changed lines
-              id: changed_lines
-              uses: hestonhoffman/changed-lines@v1
+    - uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: 2.6
+    - run: gem install goodcheck
 
-            - name: Print changed lines
-              env:
-                CHANGED: ${{ steps.changed_lines.outputs.changed_lines }}
-              run: echo "$CHANGED"
+    - name: Analyze code statically using Goodcheck
+      id: goodcheck-analysis
+      run: |
+          echo "errors='$(goodcheck check ${{ steps.changed_lines.outputs.changed_files }} --format=json)'" >> $GITHUB_OUTPUT
 
-            - uses: ruby/setup-ruby@v1
-              with:
-                ruby-version: 2.6
-            - run: gem install goodcheck
-
-            - name: Analyze code statically using Goodcheck
-              id: goodcheck-analysis
-              run: |
-                  echo "errors='$(goodcheck check ${{ steps.changed_lines.outputs.changed_files }} --format=json)'" >> $GITHUB_OUTPUT
-
-            - name: Add code review comments to PR
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-                  CHANGED: ${{ steps.changed_lines.outputs.changed_lines }}
-                  ERRORS: ${{ steps.goodcheck-analysis.outputs.errors }}
-              run: bash src/add-comments-to-pr.sh
+    - name: Add code review comments to PR
+      env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CHANGED: ${{ steps.changed_lines.outputs.changed_lines }}
+          ERRORS: ${{ steps.goodcheck-analysis.outputs.errors }}
+      run: bash src/add-comments-to-pr.sh

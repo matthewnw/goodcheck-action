@@ -1,3 +1,6 @@
+#!/bin/bash
+set -e
+
 count=0
 existingComments=$(gh api repos/$GITHUB_REPOSITORY/pulls/${{ github.event.pull_request.number }}/comments)
 
