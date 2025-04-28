@@ -30,7 +30,6 @@ runs:
       with:
         ruby-version: 2.6
       run: gem install goodcheck
-      shell: bash
 
     - name: Analyze code statically using Goodcheck
       id: goodcheck-analysis
